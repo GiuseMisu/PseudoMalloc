@@ -1,2 +1,2 @@
 # Progetto-SO
-Progetto per l'esame di Sistemi Operativi, Ingegneria Informatica Sapienza 2022-2023
+Progetto per l'esame di Sistemi Operativi, Ingegneria Informatica e Automatica Sapienza 2022-2023
