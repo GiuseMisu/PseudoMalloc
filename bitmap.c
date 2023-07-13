@@ -20,13 +20,13 @@ void bit_map_set(Bit_map * bm, int pos, int boolean){
         exit(EXIT_FAILURE); // esco
     }
 
-    int byte = pos / 8; // calcolo il byte
-    int bit = pos % 8; // calcolo il bit
+    int byte = pos / 8; // calcolo il byte, cioè specifica l'indice del byte che contiene il bit da impostare
+    int bit = pos % 8; // calcolo il bit, cioè specifico offset all'interno del byte
 
     if(boolean == 0){ // se boolean è 0
-        bm->data[byte] &= ~(1 << bit); // resetto il bit
+        bm->data[byte] &= ~(1 << bit); // resetto il bit a 0 
     }
     else{
-        bm->data[byte] |= 1 << bit; // setto il bit
+        bm->data[byte] |= 1 << bit; // setto il bit a 1 
     }
 }
