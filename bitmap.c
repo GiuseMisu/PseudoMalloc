@@ -15,9 +15,9 @@ void bit_map_init(Bit_map * bm, uint8_t * buff ,int dim_buffer){
 void bit_map_set(Bit_map * bm, int pos, int boolean){
 
     if(pos >= bm->num_bit){ // se la posizione è maggiore del numero di bit
-        //errno = EINVAL; // setto errno
+        errno = EINVAL; // setto errno come invalid argument
         perror("bit_map_set"); // stampo l'errore
-        exit(EXIT_FAILURE); // esco
+        //exit(EXIT_FAILURE); // esco
     }
 
     int byte = pos / 8; // calcolo il byte, cioè specifica l'indice del byte che contiene il bit da impostare
@@ -29,4 +29,17 @@ void bit_map_set(Bit_map * bm, int pos, int boolean){
     else{
         bm->data[byte] |= 1 << bit; // setto il bit a 1 
     }
+}
+
+int bit_map_get(Bit_map * bm, int pos){
+
+    if(pos >= bm->num_bit){ // se la posizione è maggiore del numero di bit
+        perror("bit_map_get"); // stampo l'errore
+        //exit(EXIT_FAILURE); // esco
+    }
+
+    int byte = pos / 8; // calcolo il byte, indice del byte che contiene il bit da prendere
+    int bit = pos % 8; // calcolo il bit, cioè specifico offset all'interno del byte
+
+    return (bm->data[byte] >> bit) & 1; // ritorno il bit in posizione pos
 }
