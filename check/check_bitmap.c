@@ -2,12 +2,14 @@
 #include "../bitmap.c"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+
 /**
  File contenente test per la struttura dati bitmap
-
  Test su: inizializzazione bitmap, set e get, set errato
- 
 */
+int num_test = 4;
+int contatore_test_giusti = 0;
 
 void test_init() {
   uint8_t buffer[16];
@@ -29,7 +31,7 @@ void test_init() {
     printf("Test init failed! Num bit is not buffer size * 8\n");
     exit(1);
   }
-  
+  contatore_test_giusti++;
   printf("Test init OK!\n");
 }
 
@@ -50,7 +52,7 @@ void test_set_get() {
     printf("Test set/get failed!\n");
     exit(1);
   }
-  
+  contatore_test_giusti++;
   printf("Test set/get OK!\n");
 }
 
@@ -66,7 +68,7 @@ void test_set_err() {
     printf("Test set err failed! errno not set\n");
     exit(1);
   }
-  
+  contatore_test_giusti++;
   printf("Test set err OK!\n");
 }
 
@@ -77,7 +79,8 @@ void test_get_err() {
   bit_map_init(&bm, buffer, 16);
 
   bit_map_get(&bm, 128); // Bit 128 is out of range
-  
+
+  contatore_test_giusti++;
   printf("Test get err OK!\n");
 }
 
@@ -88,5 +91,6 @@ int main() {
   test_set_err();
   test_get_err();
   
+  printf("Test eseguiti correttamente: %d/%d\n", contatore_test_giusti, num_test);
   return 0;
 }
