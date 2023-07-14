@@ -19,7 +19,7 @@
 #include "Buddy_Allocator.h"
 
 int get_parent_index(int index){
-  return (int)((index) / 2);
+  return (int)((index - 1) / 2);
 }
 
 int from_index_to_level(int index){
@@ -42,6 +42,15 @@ int first_index_from_level(int level){
   return (int)(1 << level);
 }
 
+int get_buddy_index(int index){
+  if(index % 2 == 0){
+    return index - 1;
+  }
+  else{
+    return index + 1;
+  }
+}
+
 void buddy_allocator_init(Buddy_allocator * buddy_allocator, void * buffer, Bit_map * bitmap, int levels, int size){
   buddy_allocator->mem = buffer;
   buddy_allocator->bitmap = bitmap;
@@ -61,7 +70,7 @@ int search_free_block(Bit_map * bitmap, int level){
     }
     i++;
   }
-  return -1;
+  return -1;//se non trovo un blocco libero ritorno -1
 }
 
 int search_free_level(Buddy_allocator * buddy_allocator, int dim){
@@ -77,6 +86,68 @@ int search_free_level(Buddy_allocator * buddy_allocator, int dim){
   return lvl;
 }
 
+int buddy_allocator_finder(Buddy_allocator * buddy_allocator, int lvl){
+  if(lvl < 0){
+    return -1;
+  }
+  while(lvl >= 0){
+    int buddy_index = search_free_block(&buddy_allocator->bitmap, lvl);
+//hai trovato un blocco libero al livello corrente
+    if(buddy_index != -1){
+      bit_map_set(&buddy_allocator->bitmap, buddy_index, 0);
+      return buddy_index;
+    }
+//non hai trovato un blocco libero al livello corrente
+    if (lvl > 0){ 
+			int parent_index = search_free_block(&buddy_allocator->bitmap, lvl - 1);
+      if (parent_index != -1) {
+        //indichiamo che il blocco padre è occupato
+        bit_map_set(&buddy_allocator->bitmap, parent_index, 0);
+        int left_child_index = get_left_child_index(parent_index);
+        int right_child_index = get_right_child_index(parent_index);
+        //indichi che i blocchi figli sono liberi
+        bit_map_set(&buddy_allocator->bitmap, left_child_index, 1);
+        bit_map_set(&buddy_allocator->bitmap, right_child_index, 1);
+        return left_child_index;
+      }
+      else {//se non hai trovato un blocco libero al livello corrente e al livello precedente vuol dire che non hai memoria disponibile
+        return -1;
+      }
+    }
+    lvl--;
+  }
+}
+
+void buddy_allocator_unleash(Buddy_allocator * buddy_allocator, int index){
+
+  //controlla la correttezza dell'indice passato
+  if(index < 0 || index > (1 << buddy_allocator->levels) - 1){
+    perror("index not valid");
+    //exit(EXIT_FAILURE);
+  }
+
+	while (index != 0){
+    int parent_index = get_parent_index(index);
+		int brother_index = get_buddy_index(index);
+
+		// se fratello del blocco in posizione index è libero allora puoi fare merge (segni padre come libero e fratello come occupato)
+		if (bitmap_get_bit(&buddy_allocator->bitmap, brother_index)){
+			// libero il padre
+			bitmap_set_bit(&buddy_allocator->bitmap, parent_index, 1);
+      // setto come occupati i due buddies fratelli
+			bitmap_set_bit(&buddy_allocator->bitmap, index, 0);
+			bitmap_set_bit(&buddy_allocator->bitmap, brother_index, 0);
+			// vanno aggiornati gli indici cosi alla prossima iterazione si controlla il padre del padre
+			index = parent_index;
+			parent_index = (index - 1) / 2;
+		}
+		else{ //se fratello non libero allora non puoi fare merge, liberi solo buddy in posizione index
+			bitmap_set_bit(&buddy_allocator->bitmap, index, 1);
+			break;
+		}
+	}
+
+}
 
 
 

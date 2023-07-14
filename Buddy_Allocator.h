@@ -1,7 +1,4 @@
 #pragma once
-
-// buddy allocator, implemented with a bitmap that manages 1 MB of memory for these small allocations.
-
 #include "bitmap.h"
 
 typedef struct {
@@ -10,7 +7,6 @@ typedef struct {
     int levels; // livelli dell'albero
     int size; // dimensione della memoria allocata //forse da rimuovere tanto lo ottieni da mem 
     int minimum_block_size; // dimensione minima che può assumere blocco
-    int *free_blocks; // array di interi che tiene traccia dei blocchi liberi
 }Buddy_allocator;
 
 int get_parent_index(int index);
@@ -25,11 +21,20 @@ int offset_from_first(int index);
 
 int first_index_from_level(int level);
 
+int get_buddy_index(int index);
+
 // inizializza la struttura dati buddy allocator
 void buddy_allocator_init(Buddy_allocator * buddy_allocator, void * buffer, Bit_map * bitmap, int levels, int size);
 
-//dato un livello restituisce la prima posizione libera
+//dato un livello restituisce la prima posizione libera su quel livello, se non ci sono posizioni libere restituisce -1
 int search_free_block(Bit_map * bitmap, int level);
 
 //trova il livello contenente il blocco di dimensione minima in grado di contenere elemento di dimensioni dim
 int search_free_level(Buddy_allocator * buddy_allocator, int dim);
+
+// cerca di trovare un blocco libero all'interno del buddy_allocator , andando a scandire tutti i livelli
+// se lo trova restituisce l'indice del blocco altrimenti -1
+int buddy_allocator_finder(Buddy_allocator * buddy_allocator, int level);
+
+// libera un determinato buddy in posizione index e controlla pure se liberando lui, si puo liberare il padre ecc..
+void buddy_allocator_unleash(Buddy_allocator * buddy_allocator, int index);
