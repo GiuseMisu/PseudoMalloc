@@ -35,11 +35,11 @@ int get_right_child_index(int index){
 }
 
 int offset_from_first(int index){
-  return (int)(index - (1 << index));
+  return (int)(index - ( (1 << from_index_to_level(index)) - 1) ); //oppure return (int)(index - (1 << from_index_to_level(index)))?
 }
 
 int first_index_from_level(int level){
-  return (int)(1 << level);
+  return (int)(1 << level) - 1; // oppure 2^level ?
 }
 
 int get_buddy_index(int index){
@@ -147,6 +147,45 @@ void buddy_allocator_unleash(Buddy_allocator * buddy_allocator, int index){
 		}
 	}
 
+}
+
+
+void * buddy_allocator_alloc(Buddy_allocator * buddy_allocator, int dim){
+
+  int level = search_free_level(buddy_allocator, dim + sizeof(int));//dimensioni ci va sommato l'header del blocco di memoria che è di 4 byte (int)
+  int index = buddy_allocator_finder(buddy_allocator, level);
+  if(index == -1){
+    perror("no memory available");
+    return NULL;
+  }
+  else{
+    int offset = offset_from_first(index);
+    int starting_dim = buddy_allocator->minimum_block_size; //dimensione del blocco di memoria più piccolo
+    int i = 0;
+    while(i < level){//itero finchè non arrivo al livello del blocco di memoria richiesto
+      offset = offset * 2;
+      //ad ogni iterazione la dimensione del blocco di memoria raddoppia
+      starting_dim = starting_dim * 2;
+      i++;
+    }
+    int * header = (int *) (buddy_allocator->mem + offset);
+    //è meglio salvarsi la dimensione del blocco di memoria allocato o salvarsi indice del blocco appena allocato?
+    //all'inizio del blocco di memoria metto la dimensione del blocco di memoria allocato
+    //*header = starting_dim;
+    *header = index; //salvo l'indice del blocco di memoria allocato, cosi con la free posso trovare il blocco di memoria da liberare
+    return (void *) (header + 1); 
+  }
+}
+
+void buddy_allocator_free_buddy(Buddy_allocator * buddy_allocator, void * ptr){
+  int * header = (int *) ptr - 1;
+  int index = *header;
+  //controlli sulla correttezza dell'indice
+  if(index < 0 || index > (1 << buddy_allocator->levels) - 1){
+    perror("index not valid");
+    //exit(EXIT_FAILURE);
+  }
+  buddy_allocator_unleash(buddy_allocator, index);
 }
 
 

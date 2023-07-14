@@ -38,3 +38,9 @@ int buddy_allocator_finder(Buddy_allocator * buddy_allocator, int level);
 
 // libera un determinato buddy in posizione index e controlla pure se liberando lui, si puo liberare il padre ecc..
 void buddy_allocator_unleash(Buddy_allocator * buddy_allocator, int index);
+
+// alloca un blocco di dimensione dim, restituisce l'indirizzo del primo byte dopo l'header, quindi inizio del blocco di memoria allocato
+void * buddy_allocator_alloc(Buddy_allocator * buddy_allocator, int dim);
+
+// libera il blocco di memoria allocato in precedenza
+void buddy_allocator_free_buddy(Buddy_allocator * buddy_allocator, void * ptr);
