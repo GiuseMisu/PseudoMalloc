@@ -15,8 +15,9 @@
 #include <errno.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 
-#include "bitmap.c"
+#include "bitmap.h"
 #include "Buddy_Allocator.h"
 
 int get_parent_index(int index){
@@ -28,11 +29,11 @@ int from_index_to_level(int index){
 }
 
 int get_left_child_index(int index){
-  return (int)((index) * 2 +1); 
+  return (int)((index) * 2 + 1);  // or return (int)((index) * 2 ); ?
 }
 
 int get_right_child_index(int index){
-  return (int)((index) * 2 + 2); 
+  return (int)((index) * 2 + 2);  // or return (int)((index) * 2 + 1); ?
 }
 
 int offset_from_first(int index){
@@ -40,7 +41,7 @@ int offset_from_first(int index){
 }
 
 int first_index_from_level(int level){
-  return (int)(1 << level) - 1; // oppure 2^level ?
+  return (int)(1 << level) - 1; // oppure 2^level ? //con -1 fai in modo che 2^0 ha come primo indice 0 e non 1, invece 2^1 ha come primo indice 2 e non 1
 }
 
 int get_buddy_index(int index){
@@ -52,21 +53,34 @@ int get_buddy_index(int index){
   }
 }
 
-void buddy_allocator_init(Buddy_allocator * buddy_allocator, void * buffer, Bit_map * bitmap, int levels, int size){
+void check_index(Buddy_allocator * buddy_allocator, int index){
+  if(index < 0 || index > (1 << buddy_allocator->levels) - 1){
+    perror("error buddy_allocator_unleash: index not valid");
+    //exit(EXIT_FAILURE);
+  }
+}
+
+void buddy_allocator_init(Buddy_allocator * buddy_allocator, void * buffer, Bit_map * bitmap, int levels, int min){
   buddy_allocator->mem = buffer;
   buddy_allocator->bitmap = bitmap;
   buddy_allocator->levels = levels;
-  buddy_allocator->size = size;
+  buddy_allocator->minimum_block_size = min;
 }
 
 int search_free_block(Bit_map * bitmap, int level){
-  int starting_index = first_index_from_level(level) - 1;
-  int ending_index = first_index_from_level(level + 1) - 1;
-
+  printf("livello passato al free block: %d\n", level);
+  int starting_index = first_index_from_level(level);
+  int ending_index = first_index_from_level(level + 1) ;//-1 perche primo livello deve esserci un solo indice e non 2
+  printf("\tstarting_index: %d\n", starting_index);
+  printf("\tending_index: %d\n", ending_index);
   //while loop fino a che non trovo un blocco libero
   int i = starting_index;
-  while(i < ending_index){
-    if(bit_map_get(bitmap, i) == 1){
+  while(i <= ending_index){
+    printf("i: %d\n", i);
+    printf("bit_map_get(bitmap, i): %d\n", bit_map_get(bitmap, i));
+    //vai a controllare lo stato di allocazione di un blocco nella bitmap
+    if(bit_map_get(bitmap, i) != 0){
+      printf("trovato un blocco libero in pos: %d\n", i);
       return i;
     }
     i++;
@@ -75,9 +89,11 @@ int search_free_block(Bit_map * bitmap, int level){
 }
 
 int search_free_level(Buddy_allocator * buddy_allocator, int dim){
+  printf("dim search_free_level: %d\n", dim);
   int lvl = buddy_allocator->levels - 1; //-1 perchè l'indice parte da 0
   int starting_dim = buddy_allocator->minimum_block_size;
   while(lvl >= 0){
+    printf("\tdimensioni attuali al livello %d, sono: %d\n", lvl, starting_dim);
     if(dim <= starting_dim){
       return lvl;
     }
@@ -87,78 +103,86 @@ int search_free_level(Buddy_allocator * buddy_allocator, int dim){
   return lvl;
 }
 
+
+//funzione implementata ricorsivamente
 int buddy_allocator_finder(Buddy_allocator * buddy_allocator, int lvl){
+  printf("buddy allocator finder, %d\n", lvl);
   if(lvl < 0){
     return -1;
   }
-  while(lvl >= 0){
-    int buddy_index = search_free_block(buddy_allocator->bitmap, lvl);
-//hai trovato un blocco libero al livello corrente
-    if(buddy_index != -1){
-      bit_map_set(buddy_allocator->bitmap, buddy_index, 0);
-      return buddy_index;
-    }
-//non hai trovato un blocco libero al livello corrente
-    if (lvl > 0){ 
-			int parent_index = search_free_block(buddy_allocator->bitmap, lvl - 1);
-      if (parent_index != -1) {
-        //indichiamo che il blocco padre è occupato
-        bit_map_set(buddy_allocator->bitmap, parent_index, 0);
-        int left_child_index = get_left_child_index(parent_index);
-        int right_child_index = get_right_child_index(parent_index);
-        //indichi che i blocchi figli sono liberi
-        bit_map_set(buddy_allocator->bitmap, left_child_index, 1);
-        bit_map_set(buddy_allocator->bitmap, right_child_index, 1);
-        return left_child_index;
-      }
-      else {//se non hai trovato un blocco libero al livello corrente e al livello precedente vuol dire che non hai memoria disponibile
-        return -1;
-      }
-    }
-    lvl--;
+  int buddy_index = search_free_block(buddy_allocator->bitmap, lvl);
+   
+  if(buddy_index != -1){//hai trovato un blocco libero al livello corrente, setti nella bit map come occupato e restituisci index in maniera tale che la alloc possa allocare in quella posizione
+    bit_map_set(buddy_allocator->bitmap, buddy_index, 0);
+    return buddy_index;
   }
+
+  printf("non hai trovato un buddy libero al livello %d\n", lvl);
+  int parent_index = buddy_allocator_finder(buddy_allocator, lvl - 1);
+  
+  if(parent_index == -1){
+    return -1;
+  }
+  printf("hai trovato un blocco libero al livello precedente: %d\n", lvl - 1);  
+  int right_index = get_right_child_index(parent_index);
+  check_index(buddy_allocator, right_index);  
+
+  int left_index = get_left_child_index(parent_index);
+  check_index(buddy_allocator, left_index);
+
+  bit_map_set(buddy_allocator->bitmap, right_index, 1);
+  return left_index;
 }
+
 
 void buddy_allocator_unleash(Buddy_allocator * buddy_allocator, int index){
-
   //controlla la correttezza dell'indice passato
-  if(index < 0 || index > (1 << buddy_allocator->levels) - 1){
-    perror("index not valid");
-    //exit(EXIT_FAILURE);
+  check_index(buddy_allocator, index);
+
+  //setta il blocco come libero
+  bit_map_set(buddy_allocator->bitmap, index, 1);
+
+  //fai ciclo per vedere se nel caso in cui tuo fratello fosse libero puoi fare merge e andare a liberare anche il padre
+  while (index != 0){
+      int parent_idx = get_parent_index(index);
+      check_index(buddy_allocator, parent_idx);
+
+      int left_index = get_left_child_index(parent_idx);
+      check_index(buddy_allocator, left_index);
+
+      int right_index = get_right_child_index(parent_idx);
+      check_index(buddy_allocator, right_index);
+
+      //controllo se possibile fare operazione di merge
+      if (bit_map_get(buddy_allocator->bitmap, left_index ) == 1 && bit_map_get(buddy_allocator->bitmap, right_index) == 1){
+          //se i due figli sono liberi allora libero anche il padre
+          bit_map_set(buddy_allocator->bitmap, parent_idx, 1);
+          //setto come occupati i due buddies fratelli
+          bit_map_set(buddy_allocator->bitmap, left_index, 0);
+          bit_map_set(buddy_allocator->bitmap, right_index, 0);
+      }
+      else{
+          break;
+      }
+      index = parent_idx;
   }
-
-	while (index != 0){
-    int parent_index = get_parent_index(index);
-		int brother_index = get_buddy_index(index);
-
-		// se fratello del blocco in posizione index è libero allora puoi fare merge (segni padre come libero e fratello come occupato)
-		if (bit_map_get(buddy_allocator->bitmap, brother_index)){
-			// libero il padre
-			bit_map_set(buddy_allocator->bitmap, parent_index, 1);
-      // setto come occupati i due buddies fratelli
-			bit_map_set(buddy_allocator->bitmap, index, 0);
-			bit_map_set(buddy_allocator->bitmap, brother_index, 0);
-			// vanno aggiornati gli indici cosi alla prossima iterazione si controlla il padre del padre
-			index = parent_index;
-			parent_index = (index - 1) / 2;
-		}
-		else{ //se fratello non libero allora non puoi fare merge, liberi solo buddy in posizione index
-			bit_map_set(buddy_allocator->bitmap, index, 1);
-			break;
-		}
-	}
-
 }
 
-
 void * buddy_allocator_alloc(Buddy_allocator * buddy_allocator, int dim){
-
+  
   int level = search_free_level(buddy_allocator, dim + sizeof(int));//dimensioni ci va sommato l'header del blocco di memoria che è di 4 byte (int)
-  int index = buddy_allocator_finder(buddy_allocator, level);
-  if(index == -1){
-    perror("no memory available");
+  if(level == -1){
+    printf("attraverso la funzione search free level non si e' trovato uno spazio abbastanza grande per allocare il blocco richiesto\n");
+    perror("error buddy_allocator_alloc: no memory available");
     return NULL;
   }
+  printf("sto passando al finder livello: %d, cosi che cerca in quel livello uno spazio vuoto\n", level);
+  int index = buddy_allocator_finder(buddy_allocator, level);
+  if(index == -1){//finder non ha trovato un blocco libero
+    perror("error buddy_allocator_alloc: no memory available");
+    return NULL;
+  }
+  //vuol dire che find ha trovato un blocco libero e ora devo allocarlo
   else{
     int offset = offset_from_first(index);
     int starting_dim = buddy_allocator->minimum_block_size; //dimensione del blocco di memoria più piccolo
@@ -181,11 +205,9 @@ void * buddy_allocator_alloc(Buddy_allocator * buddy_allocator, int dim){
 void buddy_allocator_free_buddy(Buddy_allocator * buddy_allocator, void * ptr){
   int * header = (int *) ptr - 1;
   int index = *header;
+  
   //controlli sulla correttezza dell'indice
-  if(index < 0 || index > (1 << buddy_allocator->levels) - 1){
-    perror("index not valid");
-    //exit(EXIT_FAILURE);
-  }
+  check_index(buddy_allocator, index);
   buddy_allocator_unleash(buddy_allocator, index);
 }
 

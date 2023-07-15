@@ -5,7 +5,6 @@ typedef struct {
     Bit_map *bitmap; // puntatore alla bitmap (guarda bitmap.h)
     void *mem; // puntatore alla memoria allocata
     int levels; // livelli dell'albero
-    int size; // dimensione della memoria allocata //forse da rimuovere tanto lo ottieni da mem 
     int minimum_block_size; // dimensione minima che può assumere blocco
 }Buddy_allocator;
 
@@ -22,6 +21,9 @@ int offset_from_first(int index);
 int first_index_from_level(int level);
 
 int get_buddy_index(int index);
+
+//controlla che siano rispettate le precondizioni per l'indice
+void check_index(Buddy_allocator * buddy_allocator, int index);
 
 // inizializza la struttura dati buddy allocator
 void buddy_allocator_init(Buddy_allocator * buddy_allocator, void * buffer, Bit_map * bitmap, int levels, int size);
