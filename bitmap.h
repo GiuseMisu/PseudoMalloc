@@ -7,7 +7,8 @@ typedef struct {
     uint8_t * data;
 } Bit_map;
 
-/*inizializza la struttura dati bitmap con un buffer di dimensione dim_buffer
+/*
+inizializza la struttura dati bitmap con un buffer di dimensione dim_buffer
 param:
     bm: puntatore alla struttura dati da inizializzare
     buff: puntatore al buffer da utilizzare
