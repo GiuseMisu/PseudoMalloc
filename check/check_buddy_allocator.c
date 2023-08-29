@@ -2,6 +2,7 @@
 #include "../bitmap.c"
 #include "../Buddy_Allocator.h"
 #include "../Buddy_Allocator.c"
+#include "../allocator.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

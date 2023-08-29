@@ -47,6 +47,7 @@ void * test_allocator(int size, Buddy_allocator * buddy_allocator){
     void * a = allocator(size, buddy_allocator);
     if(a == NULL){
         printf("errore nella allocazione tramite ALLOCATOR\n");
+        return NULL;
     }
     else{
         test_passed_allocator++;
@@ -60,6 +61,7 @@ void * test_allocator_mmap(int size, Buddy_allocator * buddy_allocator){//passia
     void * b = allocator(size, buddy_allocator);
     if(b == NULL){
         printf("errore nella allocazione tramite MMAP\n");
+        return NULL;
     }
     else{
         test_passed_allocator++;
@@ -125,11 +127,17 @@ int main(){
     test_initialize(&bitmap, bitmap_buffer, &buddy_allocator, mem_buffer, num_levels, minimum_block_size, BITSET_SIZE);
     
     void * ptr1 = test_allocator(2100, &buddy_allocator);
-
-    test_deallocator_allocator(&buddy_allocator, ptr1, 2100);
+    if(ptr1 !=  NULL){
+        test_deallocator_allocator(&buddy_allocator, ptr1, 2100);
+        //se non ha passato test_allocazione inutile fargli fare la deallocazione
+    }
 
     void * ptr2 = test_allocator_mmap(2600, &buddy_allocator);
-    test_deallocator_munmap(ptr2, 2600);
+    if(ptr2 != NULL){
+        test_deallocator_munmap(ptr2, 2600);
+        //se fallito test_inizializzazione inutile deallocazione
+    }
+    
 
     test_simil_calloc(10, 3, &buddy_allocator );
     
