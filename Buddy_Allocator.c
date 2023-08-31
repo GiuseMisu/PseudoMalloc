@@ -29,19 +29,19 @@ int from_index_to_level(int index){
 }
 
 int get_left_child_index(int index){
-  return (int)((index) * 2 + 1);  // or return (int)((index) * 2 ); ?
+  return (int)((index) * 2 + 1);  
 }
 
 int get_right_child_index(int index){
-  return (int)((index) * 2 + 2);  // or return (int)((index) * 2 + 1); ?
+  return (int)((index) * 2 + 2);  
 }
 
 int offset_from_first(int index){
-  return (int)(index - ( (1 << from_index_to_level(index)) - 1) ); //oppure return (int)(index - (1 << from_index_to_level(index)))?
+  return (int)(index - ( (1 << from_index_to_level(index)) - 1) ); 
 }
 
 int first_index_from_level(int level){
-  return (int)(1 << level) - 1; // oppure 2^level ? //con -1 fai in modo che 2^0 ha come primo indice 0 e non 1, invece 2^1 ha come primo indice 2 e non 1
+  return (int)(1 << level) - 1; 
 }
 
 int get_buddy_index(int index){
@@ -194,9 +194,7 @@ void * buddy_allocator_alloc(Buddy_allocator * buddy_allocator, int dim){
       i++;
     }
     int * header = (int *) (buddy_allocator->mem + offset);
-    //è meglio salvarsi la dimensione del blocco di memoria allocato o salvarsi indice del blocco appena allocato?
-    //all'inizio del blocco di memoria metto la dimensione del blocco di memoria allocato
-    //*header = starting_dim;
+
     *header = index; //salvo l'indice del blocco di memoria allocato, cosi con la free posso trovare il blocco di memoria da liberare
     return (void *) (header + 1); 
   }

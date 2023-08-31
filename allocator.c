@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <string.h>
 
-//Importiamo le librerie necessarie per allocator
+//librerie necessarie per allocator
 #include "bitmap.h"
 #include "Buddy_Allocator.h"
 #include "allocator.h"
@@ -31,7 +31,7 @@ void *allocator(int size, Buddy_allocator * buddy_allocator){
         //in base alla dimensione richiesta decidiamo se effetturare allocazione tramite mmap o allocator
         if(size > page_dim/4){
             printf("la dimensione è %d, quindi è più grande della dimensione di un quarto di pagina %d \n", size, page_dim/4);
-            void * pointer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);//mi segnala errore su map anonymous ma comunque funziona
+            void * pointer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
             if(pointer == MAP_FAILED){
                 errno = ENOMEM;//not enough memory
@@ -69,10 +69,11 @@ int deallocator_mmap(void *ptr, int dim){
                 perror("munmap");
                 return -1;
             }
-            
-
         }
         //else stai sbagliando a chiamare la funzione devi deallocare con buddy
+        else{
+            return -1;
+        }
     }
 }
 
@@ -85,8 +86,7 @@ int deallocator_buddy(Buddy_allocator * buddy_allocator, void *ptr, int dim){
     }
     else{
         if(dim <= page_dim/4){//let's use the buddy
-            buddy_allocator_free_buddy(buddy_allocator,ptr);
-            
+            buddy_allocator_free_buddy(buddy_allocator,ptr); 
         }
         else{//else stai sbagliando a deallocare devi usare munmap
             return -1;

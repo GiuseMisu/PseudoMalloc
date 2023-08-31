@@ -34,7 +34,7 @@ int search_free_block(Bit_map * bitmap, int level);
 //trova il livello contenente il blocco di dimensione minima in grado di contenere elemento di dimensioni dim
 int search_free_level(Buddy_allocator * buddy_allocator, int dim);
 
-// cerca di trovare un blocco libero all'interno del buddy_allocator , andando a scandire tutti i livelli
+// cerca di trovare un blocco libero all'interno del buddy_allocator, andando a scandire tutti i livelli
 // se lo trova restituisce l'indice del blocco altrimenti -1
 int buddy_allocator_finder(Buddy_allocator * buddy_allocator, int level);
 

@@ -3,7 +3,6 @@
 //Funzione che inizializza allocator
 void allocator_initialize(Bit_map * bitmap, void * buffer, Buddy_allocator * buddy_allocator,  void * buffer_buddy, int num_levels, int min_block_size, int bitset_size);
 
-// Function that allocates memory, 
 //Funzione che alloca la memoria, tipologia di allocazione dipende dalla dimensione richiesta
 //Se dim minore di 1/4 della dimensione di una pagina allora si usa la mia implementazione, altrimenti si usa mmap
 void *allocator(int size, Buddy_allocator * buddy_allocator);

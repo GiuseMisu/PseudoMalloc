@@ -25,6 +25,11 @@ void bit_map_set(Bit_map * bm, int pos, int boolean){
 
     if(boolean == 0){ // se boolean è 0
         bm->data[byte] &= ~(1 << bit); // resetto il bit a 0 
+        //Istruzione azzererà solo il bit specificato da bit nel byte, lasciando tutto il resto inalterato.
+        //(1 << bit) valore in cui il bit specificato è 1,tutti altri  o
+        //~ fai inversione val ottenuto ("il negativo")
+        //bm->data[byte] &= ~(1 << bit) prende il byte nell'array, 
+        //fa AND bit a bit con ~(1 << bit).
     }
     else{
         bm->data[byte] |= 1 << bit; // setto il bit a 1 
@@ -42,6 +47,7 @@ int bit_map_get(Bit_map * bm, int pos){
     int byte = pos / 8; // calcolo il byte, indice del byte che contiene il bit da prendere
     int bit = pos % 8; // calcolo il bit, cioè specifico offset all'interno del byte
 
-    return (bm->data[byte] >> bit) & 1; // ritorno il bit in posizione pos*/
+    //bm->data[byte] accedo a byte specificato, con >> bit mi sposto di un numero di bit 
+    return (bm->data[byte] >> bit) & 1; // ritorno il bit in posizione pos
     
 }
