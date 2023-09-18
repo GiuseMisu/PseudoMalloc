@@ -48,6 +48,6 @@ int bit_map_get(Bit_map * bm, int pos){
     int bit = pos % 8; // calcolo il bit, cioè specifico offset all'interno del byte
 
     //bm->data[byte] accedo a byte specificato, con >> bit mi sposto di un numero di bit 
-    return (bm->data[byte] >> bit) & 1; // ritorno il bit in posizione pos
+    return (bm->data[byte] >> bit) & 1; // ritorno il bit in posizione pos, tramite & 1 mi assicuro che solo il bit meno significativo del risultato dello shift sia considerato, ignorando tutti gli altri bit.
     
 }
