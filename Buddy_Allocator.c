@@ -185,16 +185,13 @@ void * buddy_allocator_alloc(Buddy_allocator * buddy_allocator, int dim){
   //vuol dire che find ha trovato un blocco libero e ora devo allocarlo
   else{
     int offset = offset_from_first(index);
+    
     int starting_dim = buddy_allocator->minimum_block_size; //dimensione del blocco di memoria più piccolo
-    int i = 0;
-    while(i < level){//itero finchè non arrivo al livello del blocco di memoria richiesto
-      offset = offset * 2;
-      //ad ogni iterazione la dimensione del blocco di memoria raddoppia
-      starting_dim = starting_dim * 2;
-      i++;
-    }
-    int * header = (int *) (buddy_allocator->mem + offset);
-
+    int dim_blc = starting_dim * (1 << (buddy_allocator->levels - level - 1) );//calcolo la dimensione del blocco in un dato livello, ad ogni livello si raddoppia
+    int a = dim_blc * offset;
+    
+    int * header = (int *) (buddy_allocator->mem + a);
+    
     *header = index; //salvo l'indice del blocco di memoria allocato, cosi con la free posso trovare il blocco di memoria da liberare
     return (void *) (header + 1); 
   }
