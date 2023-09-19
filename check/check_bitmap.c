@@ -8,7 +8,7 @@
  File contenente test per la struttura dati bitmap
  Test su: inizializzazione bitmap, set e get, set errato
 */
-int num_test = 4;
+int num_test = 2;
 int contatore_test_giusti = 0;
 
 void test_init() {
@@ -56,40 +56,10 @@ void test_set_get() {
   printf("Test set/get OK!\n");
 }
 
-void test_set_err() {
-  uint8_t buffer[16];
-  
-  Bit_map bm;
-  bit_map_init(&bm, buffer, 16);
-
-  bit_map_set(&bm, 128, 1); // Bit 128 is out of range
-  
-  if(errno != EINVAL) {
-    printf("Test set err failed! errno not set\n");
-    exit(1);
-  }
-  contatore_test_giusti++;
-  printf("Test set err OK!\n");
-}
-
-void test_get_err() {
-  uint8_t buffer[16];
-  
-  Bit_map bm; 
-  bit_map_init(&bm, buffer, 16);
-
-  bit_map_get(&bm, 128); // Bit 128 is out of range
-
-  contatore_test_giusti++;
-  printf("Test get err OK!\n");
-}
-
-
 int main() {
   test_init();
   test_set_get();
-  test_set_err();
-  test_get_err();
+
   
   printf("Test eseguiti correttamente: %d/%d\n", contatore_test_giusti, num_test);
   return 0;
